@@ -42,10 +42,21 @@ export default async function handler(req, res) {
 
       const data = await response.json();
       let text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
-      // Strip citation/XML tags
-      text = text.replace(/<\/?antml:[^>]*>/g, "").replace(/<\/?cite[^>]*>/g, "").replace(/<[^>]*index="[^"]*"[^>]*>/g, "");
+      
+      // Aggressively strip ALL XML/HTML-like tags
+      text = text.replace(/<[^>]+>/g, "");
+      // Strip markdown code fences
+      text = text.replace(/```json\s*/g, "").replace(/```\s*/g, "");
+      // Clean up any double-spaces left behind
+      text = text.replace(/  +/g, " ");
+      
       return res.status(200).json({ text });
     }
+    return res.status(500).json({ error: "Failed after retries" });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Server error" });
+  }
+}
     return res.status(500).json({ error: "Failed after retries" });
   } catch (err) {
     return res.status(500).json({ error: err.message || "Server error" });
