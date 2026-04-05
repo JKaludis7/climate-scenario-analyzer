@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/climate.js": { "maxDuration": 120 },
+    "api/health.js": { "maxDuration": 10 }
+  }
+}
