@@ -38,12 +38,19 @@ const callAPI = async (system, userMessage) => {
 };
 
 const extractJSON = (txt) => {
-  let c = txt.replace(/<\/?antml:[^>]*>/g,"").replace(/<\/?cite[^>]*>/g,"").replace(/<[^>]*index="[^"]*"[^>]*>/g,"").replace(/```json/g,"").replace(/```/g,"").trim();
+  let c = txt.replace(/<[^>]+>/g, "").replace(/```json/g,"").replace(/```/g,"").trim();
   try { return JSON.parse(c); } catch {}
   let d=0,s=-1,e=-1;
   for(let i=0;i<c.length;i++){if(c[i]==="{"){if(d===0)s=i;d++;}else if(c[i]==="}"){d--;if(d===0&&s!==-1){e=i;break;}}}
-  if(s!==-1&&e!==-1){const j=c.substring(s,e+1);try{return JSON.parse(j);}catch{return JSON.parse(j.replace(/,\s*}/g,"}").replace(/,\s*\]/g,"]").replace(/[\x00-\x1F]+/g," "));}}
-  throw new Error("Failed to parse climate data");
+  if(s!==-1&&e!==-1){
+    let j=c.substring(s,e+1);
+    try{return JSON.parse(j);}catch{
+      j=j.replace(/,\s*}/g,"}").replace(/,\s*\]/g,"]").replace(/[\x00-\x1F]+/g," ").replace(/\n/g," ").replace(/\t/g," ");
+      try{return JSON.parse(j);}catch(err){console.error("Parse fail:",j.substring(0,300));throw new Error("Failed to parse climate data. Please retry.");}
+    }
+  }
+  console.error("No JSON in response:",c.substring(0,300));
+  throw new Error("No climate data received. Please retry.");
 };
 
 const SYS = "You are a climate risk analyst specializing in TCFD-aligned scenario analysis and NGFS climate scenarios. Research companies thoroughly using web search. Model realistic climate risk impacts based on the company's actual industry, geography, emissions profile, and business model. Use specific numbers and percentages where possible. Respond with ONLY valid JSON. No markdown, no backticks, no citation tags, no XML tags. Plain JSON only.";
